@@ -2,7 +2,7 @@
 import {useMemo, useRef, useState} from "react";
 import { PermissionsAndroid, Platform } from "react-native";
 
-import { Device } from "react-native-ble-plx";
+import {BleManager, Device} from "react-native-ble-plx";
 
 interface BluetoothLowEnergyApi {
     requestPermissions(): Promise<boolean>;
@@ -16,6 +16,10 @@ interface BluetoothLowEnergyApi {
 
 function useBLE(): BluetoothLowEnergyApi {
 
+    const bleManager = useMemo(() => {
+        return new BleManager();
+    }
+    , []);
     const [allDevices, setAllDevices] = useState<Device[]>([]);
     const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
     const [heartRate, setHeartRate] = useState<number>(0);
@@ -49,12 +53,33 @@ function useBLE(): BluetoothLowEnergyApi {
         return false
     }
 
-    const isDuplicteDevice = (devices: Device[], nextDevice: Device) =>
-        devices.findIndex((device) => nextDevice.id === device.id) > -1;
+    const isDuplicteDevice = (devices: Device[], nextDevice: Device) => {
+        return devices.some((device) => device.id === nextDevice.id);
+    };
 
-    const scanForPeripherals = () => {
-        console.log("Scanning for peripherals");
+    async function isBluetoothOn() {
+        const isOn = await bleManager.state();
+        return isOn === "PoweredOn";
+    }
 
+    const scanForPeripherals = async () => {
+        let devices: Device[] = [];
+        if (!await isBluetoothOn()){
+            bleManager.enable().then(() => console.log("Bluetooth is now on"));
+        }
+        bleManager.startDeviceScan(null, null, (error, device) => {
+            if (error) {
+                console.log(error);
+                return;
+            }
+            if (device && !isDuplicteDevice(devices, device)) {
+                devices.push(device);
+            }
+        });
+        setTimeout(() => {
+            bleManager.stopDeviceScan();
+            setAllDevices(devices);
+        }, 5000);
     }
 
 

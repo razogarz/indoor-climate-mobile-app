@@ -37,10 +37,6 @@ function Home({navigation}: any){
         requestPermissions().then((result) => {
             setPermissions(result);
         });
-        PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION).then((result) => { console.log(result) });
-        PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION).then((result) => { console.log(result) });
-        PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT).then((result) => { console.log(result) });
-        PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN).then((result) => { console.log(result) });
         }, []);
 
     return (
@@ -72,13 +68,14 @@ function Home({navigation}: any){
                     <Text>Przeskanuj urządzenia</Text>
                 </TouchableOpacity>
             </View>
-            {allDevices.map((device) => {
-                return (
-                    <View key={device.id}>
-                        <Text>{device.name}</Text>
-                    </View>
-                )
-            })}
+            {allDevices.length > 0 && (
+                <View style={styles.bluetoothDevices}>
+                    <Text style={styles.text}>Znalezione urządzenia:</Text>
+                    {allDevices.map((device) => (
+                        <Text key={device.id}>{device.name}</Text>
+                    ))}
+                </View>
+            )}
             <Modal navigation={navigation} />
         </>
     )
@@ -91,11 +88,9 @@ let styles = StyleSheet.create({
         marginTop: 20,
         height: "20%",
         alignItems: "center",
-        backgroundColor: colors.primary,
     },
     text: {
         fontSize: 20,
-        paddingVertical: 10,
         textAlign: "center"
     },
     connectionText: {
@@ -117,5 +112,12 @@ let styles = StyleSheet.create({
         paddingHorizontal: 20,
         borderRadius: 10,
         marginTop: 10
+    },
+    bluetoothDevices: {
+        top: 120,
+        marginTop: 20,
+        height: "20%",
+        alignItems: "center",
+        backgroundColor: colors.gray,
     }
 });
