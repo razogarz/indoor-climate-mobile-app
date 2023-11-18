@@ -1,21 +1,33 @@
-import {View, StyleSheet, Button, Pressable, Text} from "react-native";
+import {View, StyleSheet, Pressable, Text} from "react-native";
 import {colors} from "../../styles/global";
 import { FontAwesome5 } from '@expo/vector-icons';
+import {useRoute} from "@react-navigation/native";
+
 function Modal({navigation}: any){
-    //load Feather font async
+    let route = useRoute();
     return (
         <View style={styles.modal}>
-            <Pressable style={[styles.button]} onPress={() => navigation.navigate("Home")}>
+            <Pressable style={[styles.button]} onPress={() => navigation.navigate("Dashboard")}>
                 <FontAwesome5 name="home" size={20} color={colors.white} />
-                <Text style={[styles.text, styles.active]}>Home</Text>
+                <Text style={[styles.text, isActive("Dashboard", route.name)]}>Dashboard</Text>
             </Pressable>
-            <Pressable style={[styles.button]} onPress={() => navigation.navigate("Data")}>
-                <FontAwesome5 name="temperature-high" size={20} color={colors.gray} />
-                <Text style={styles.text}>Data</Text>
+            <Pressable style={[styles.button]} onPress={() => navigation.navigate("MyDevices")}>
+                <FontAwesome5 name="calculator" size={20} color={colors.gray} />
+                <Text style={[styles.text, isActive("MyDevices", route.name)]}>My devices</Text>
+            </Pressable>
+            <Pressable style={[styles.button]} onPress={() => navigation.navigate("AddDevices")}>
+                <FontAwesome5 name="plus" size={20} color={colors.gray} />
+                <Text style={[
+                    styles.text,
+                    isActive("AddDevices", route.name)
+                ]}>Add devices</Text>
             </Pressable>
             <Pressable style={[styles.button]} onPress={() => navigation.navigate("About")}>
                 <FontAwesome5 name="question" size={20} color={colors.gray} />
-                <Text style={styles.text}>About</Text>
+                <Text style={[
+                    styles.text,
+                    isActive("About", route.name)
+                ]}>About</Text>
             </Pressable>
         </View>
     )
@@ -53,3 +65,7 @@ let styles = StyleSheet.create({
         borderBottomColor: colors.white,
     }
 });
+
+function isActive(screenName: string, route: string){
+    return route === screenName ? styles.active : null;
+}

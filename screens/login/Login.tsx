@@ -2,9 +2,6 @@ import {
     View,
     Text,
     TextInput,
-    Button,
-    StyleSheet,
-    KeyboardAvoidingView,
     TouchableOpacity,
     Image,
     Alert
@@ -12,7 +9,7 @@ import {
 import {useState, Dispatch, SetStateAction, useContext} from "react";
 import {styles} from "../../styles/global";
 import {endpoints} from "../../components/Endpoints";
-import {useUserCredentials} from "../../components/userCredentials/UserCredentials";
+import {useUserCredentials} from "../../components/userCredentialsContext/useUserCredentials";
 
 function Login({navigation}: any){
     const {setVerifiedLogin, setVerifiedPassword, setToken} = useUserCredentials();
@@ -20,6 +17,7 @@ function Login({navigation}: any){
     const [password, setPassword] = useState('');
     const [loginError, setLoginError] = useState(false);
 
+    // @ts-ignore
     return(
         <View style={[styles.wrapper, {backgroundColor:"white"}]}>
             <View style={styles.container}>
@@ -89,7 +87,7 @@ function handleLogin(
             setVerifiedLogin(login);
             setVerifiedPassword(password);
             setToken(data.user_bearer_token);
-            navigation.navigate("Home");
+            navigation.navigate("Dashboard");
         } else {
             setLoginError(true);
             Alert.alert("Błąd serwera! Spróbuj ponownie później.");

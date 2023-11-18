@@ -74,7 +74,7 @@ function handleRegister(
             return res.json();
         })
         .then(data => {
-            //if data has message its error, if its null its success
+            //if addDevices has message its error, if its null its success
             if(data.message){
                 alert(data.message);
                 setPass('');

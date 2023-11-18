@@ -5,7 +5,8 @@ export const colors = {
     secondary: "#4C5C68",
     tertiary: "#46494C",
     gray: "#C5C3C6",
-    white: "#ededf3"
+    white: "#ededf3",
+    red: "#e92f2f",
 }
 
 export const styles = StyleSheet.create({

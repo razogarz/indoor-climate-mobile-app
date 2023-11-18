@@ -1,5 +1,5 @@
 /* eslint-disable no-bitwise */
-import {useMemo, useRef, useState} from "react";
+import { useMemo, useState} from "react";
 import { PermissionsAndroid, Platform } from "react-native";
 
 import {BleManager, Device} from "react-native-ble-plx";
@@ -7,22 +7,13 @@ import {BleManager, Device} from "react-native-ble-plx";
 interface BluetoothLowEnergyApi {
     requestPermissions(): Promise<boolean>;
     scanForPeripherals(): void;
-    // connectToDevice: (deviceId: Device) => Promise<void>;
-    // disconnectFromDevice: () => void;
-    // connectedDevice: Device | null;
     allDevices: Device[];
-    // heartRate: number;
 }
 
 function useBLE(): BluetoothLowEnergyApi {
 
-    const bleManager = useMemo(() => {
-        return new BleManager();
-    }
-    , []);
+    const bleManager = useMemo(() => {return new BleManager();}, []);
     const [allDevices, setAllDevices] = useState<Device[]>([]);
-    const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
-    const [heartRate, setHeartRate] = useState<number>(0);
 
     const requestPermissions = async () => {
         if (Platform.OS === 'ios') {
@@ -57,40 +48,54 @@ function useBLE(): BluetoothLowEnergyApi {
         return devices.some((device) => device.id === nextDevice.id);
     };
 
-    async function isBluetoothOn() {
+    async function enableBluetooth() {
         const isOn = await bleManager.state();
+        if( isOn !== "PoweredOn")
+            bleManager.enable()
+                .then(() => console.log("Bluetooth is now on"))
+                .catch((error) => console.log("An error occurred while enabling Bluetooth", error));
         return isOn === "PoweredOn";
     }
 
-    const scanForPeripherals = async () => {
-        let devices: Device[] = [];
-        if (!await isBluetoothOn()){
-            bleManager.enable().then(() => console.log("Bluetooth is now on"));
-        }
+    async function singleScan(): Promise<Device[]> {
+        const devices: Device[] = [];
         bleManager.startDeviceScan(null, null, (error, device) => {
             if (error) {
-                console.log(error);
+                bleManager.stopDeviceScan();
                 return;
             }
-            if (device && !isDuplicteDevice(devices, device)) {
+            if (
+                device
+                // && !isDuplicteDevice(devices, device)
+            ) {
+                bleManager.stopDeviceScan();
                 devices.push(device);
             }
         });
-        setTimeout(() => {
-            bleManager.stopDeviceScan();
-            setAllDevices(devices);
-        }, 5000);
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                bleManager.stopDeviceScan();
+                resolve(devices);
+            }, 1000);
+        });
+    }
+
+    const scanForPeripherals = async () => {
+        await enableBluetooth();
+        const devices = await singleScan();
+        console.log("Found addDevices: ", devices.map((device) => device.name));
+        setAllDevices((prev) => {
+            const savedDevicesMAC = prev.map((device) => device.id);
+            const newDevices = devices.filter((device) => !savedDevicesMAC.includes(device.id) && device.name);
+            return [...prev, ...newDevices];
+        });
     }
 
 
     return {
         scanForPeripherals,
         requestPermissions,
-        // connectToDevice,
         allDevices,
-        // connectedDevice,
-        // disconnectFromDevice,
-        // heartRate,
     };
 }
 
