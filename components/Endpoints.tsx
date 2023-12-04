@@ -1,4 +1,4 @@
-const url = "http://192.168.181.115:8410"
+const url = "http://192.168.0.235:8410"
 
 export const endpoints = {
     register: url + "/users/register",

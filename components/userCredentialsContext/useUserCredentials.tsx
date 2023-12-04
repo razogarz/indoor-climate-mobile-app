@@ -1,4 +1,4 @@
-import {createContext, useContext, useState} from "react";
+import {createContext, useContext, useState, Dispatch, SetStateAction} from "react";
 
 const UserCredentialsContext = createContext({
     verifiedLogin: '',

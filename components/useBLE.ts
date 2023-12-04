@@ -1,6 +1,6 @@
 /* eslint-disable no-bitwise */
-import { useMemo, useState} from "react";
-import { PermissionsAndroid, Platform } from "react-native";
+import {useMemo, useState} from "react";
+import {PermissionsAndroid, Platform} from "react-native";
 
 import {BleManager, Device} from "react-native-ble-plx";
 
@@ -8,6 +8,7 @@ interface BluetoothLowEnergyApi {
     requestPermissions(): Promise<boolean>;
     scanForPeripherals(): void;
     allDevices: Device[];
+    connectToDevice(deviceId: string): void;
 }
 
 function useBLE(): BluetoothLowEnergyApi {
@@ -30,7 +31,8 @@ function useBLE(): BluetoothLowEnergyApi {
                 const result = await PermissionsAndroid.requestMultiple([
                     PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
                     PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+
                 ])
 
                 return (
@@ -44,11 +46,11 @@ function useBLE(): BluetoothLowEnergyApi {
         return false
     }
 
-    const isDuplicteDevice = (devices: Device[], nextDevice: Device) => {
+    const _isDuplicteDevice = (devices: Device[], nextDevice: Device) => {
         return devices.some((device) => device.id === nextDevice.id);
     };
 
-    async function enableBluetooth() {
+    async function _enableBluetooth() {
         const isOn = await bleManager.state();
         if( isOn !== "PoweredOn")
             bleManager.enable()
@@ -57,7 +59,7 @@ function useBLE(): BluetoothLowEnergyApi {
         return isOn === "PoweredOn";
     }
 
-    async function singleScan(): Promise<Device[]> {
+    async function _singleScan(): Promise<Device[]> {
         const devices: Device[] = [];
         bleManager.startDeviceScan(null, null, (error, device) => {
             if (error) {
@@ -66,7 +68,7 @@ function useBLE(): BluetoothLowEnergyApi {
             }
             if (
                 device
-                // && !isDuplicteDevice(devices, device)
+                && !_isDuplicteDevice(devices, device)
             ) {
                 bleManager.stopDeviceScan();
                 devices.push(device);
@@ -81,14 +83,29 @@ function useBLE(): BluetoothLowEnergyApi {
     }
 
     const scanForPeripherals = async () => {
-        await enableBluetooth();
-        const devices = await singleScan();
-        console.log("Found addDevices: ", devices.map((device) => device.name));
+        await _enableBluetooth();
+        const devices = await _singleScan();
+        console.log("Devices: ", devices.map((device) => device.id));
         setAllDevices((prev) => {
             const savedDevicesMAC = prev.map((device) => device.id);
-            const newDevices = devices.filter((device) => !savedDevicesMAC.includes(device.id) && device.name);
+            const newDevices = devices.filter((device) => !savedDevicesMAC.includes(device.id));
             return [...prev, ...newDevices];
         });
+    }
+
+    const connectToDevice = async (deviceId: string) => {
+        console.log("Connecting to device: ", deviceId)
+        bleManager.connectToDevice(deviceId)
+            .then((device) => {
+                console.log("Connected to device: ", device.id);
+                device.discoverAllServicesAndCharacteristics()
+                    .then((device) => {
+                        console.log("All services and characteristics discovered");
+                        console.log("Device: ", JSON.stringify(device, null, 2));
+                    })
+                    .catch((error) => console.log("An error occurred while discovering services and characteristics", error));
+                })
+            .catch((error) => console.log("An error occurred while connecting to device", error));
     }
 
 
@@ -96,6 +113,7 @@ function useBLE(): BluetoothLowEnergyApi {
         scanForPeripherals,
         requestPermissions,
         allDevices,
+        connectToDevice
     };
 }
 

@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, TouchableOpacity, SafeAreaView} from "react-native";
+import {View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView} from "react-native";
 import {colors} from "../../styles/global";
 import {useEffect, useRef, useState} from "react";
 import useBLE from "../../components/useBLE";
@@ -8,18 +8,20 @@ function AddDevices(
     {navigation}: any
 ){
     let scanInterval = useRef<any>(null);
+    let isScanning = useRef<boolean>(false);
     const [permissions, setPermissions] = useState(false);
     const {
         requestPermissions,
         scanForPeripherals,
-        allDevices
+        allDevices,
+        connectToDevice
     } = useBLE();
 
     useEffect(() => {
         requestPermissions().then((result) => {
             setPermissions(result);
         });
-    }, []);
+    }, [scanInterval.current]);
 
     return (
         <>
@@ -30,6 +32,7 @@ function AddDevices(
                     style={[styles.button, styles.bgRed]}
                     onPress={() => {
                         clearInterval(scanInterval.current);
+                        isScanning.current = false;
                     }}
                 >
                     <Text style={styles.buttonText}>Cancel</Text>
@@ -42,6 +45,7 @@ function AddDevices(
                     onPress={() => {
                         if(permissions){
                             clearInterval(scanInterval.current);
+                            isScanning.current = true;
                             scanInterval.current = setInterval(() => {
                                 scanForPeripherals();
                             }, 1500);
@@ -52,24 +56,34 @@ function AddDevices(
                 </TouchableOpacity>
             </View>
         </View>
-        <View>
-            {allDevices.length > 0 && (
-                <SafeAreaView style={styles.bluetoothDevices}>
-                    <Text style={styles.text}>Znalezione urządzenia:</Text>
-                    {allDevices.map((device) => (
-                        <TouchableOpacity
-                            style={styles.bluetoothDeviceButton}
-                            onPress={() => {
-                                // connectToDevice(device.id);
-                            }}
-                            key={device.id}
-                        >
-                            <Text>{device.name}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </SafeAreaView>
-            )}
-        </View>
+        <ScrollView>
+            <Text style={[
+                styles.text,
+                styles.textCenter
+            ]}>
+                {isScanning.current ? "Scanning..." : "Not scanning"}
+            </Text>
+            <ScrollView>
+                {allDevices.length > 0 && (
+                    <SafeAreaView style={styles.bluetoothDevices}>
+                        <Text style={styles.text}>Devices found:</Text>
+                        {allDevices.map((device) => (
+                            <TouchableOpacity
+                                style={styles.bluetoothDeviceButton}
+                                onPress={() => {
+                                    clearInterval(scanInterval.current);
+                                    isScanning.current = false;
+                                    connectToDevice(device.id);
+                                }}
+                                key={device.id}
+                            >
+                                <Text>{device.name}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </SafeAreaView>
+                )}
+            </ScrollView>
+        </ScrollView>
             <Modal navigation={navigation} />
     </>
     )
@@ -94,6 +108,9 @@ let styles = StyleSheet.create({
     text: {
         fontSize: 16,
         paddingVertical: 10,
+    },
+    textCenter: {
+        textAlign: "center"
     },
     bluetoothDevices: {
         padding: 15,
