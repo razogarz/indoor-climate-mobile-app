@@ -67,7 +67,7 @@ function AddDevices(
                 {allDevices.length > 0 && (
                     <SafeAreaView style={styles.bluetoothDevices}>
                         <Text style={styles.text}>Devices found:</Text>
-                        {allDevices.map((device) => (
+                        {allDevices.map((device, index) => (
                             <TouchableOpacity
                                 style={styles.bluetoothDeviceButton}
                                 onPress={() => {
@@ -77,7 +77,7 @@ function AddDevices(
                                 }}
                                 key={device.id}
                             >
-                                <Text>{device.name}</Text>
+                                <Text>{device.name || "Unknown device " + index}</Text>
                             </TouchableOpacity>
                         ))}
                     </SafeAreaView>
