@@ -1,6 +1,8 @@
 import {View, Text, StyleSheet, TouchableOpacity, Alert} from "react-native";
-import {Dispatch, SetStateAction, useState} from "react";
+import {Dispatch, SetStateAction, useEffect, useState} from "react";
 import Modal from "../../components/modal";
+import {useUserCredentials} from "../../components/userCredentialsContext/useUserCredentials";
+import {deleteDevice, getDevices} from "../../components/Endpoints";
 // import {Dispatch, SetStateAction, useState} from "react";
 
 type DeviceProp = {
@@ -8,22 +10,23 @@ type DeviceProp = {
     name: string
 }
 function MyDevices({navigation}: any) {
-    const [devicesArray, setDevicesArray] = useState([
-        {
-            id: "1",
-            name: "device-1",
-        },{
-            id: "2",
-            name: "device-2",
-        },{
-            id: "3",
-            name: "device-3",
-        }
-    ]);
+    const {token} = useUserCredentials();
+    const [devicesArray, setDevicesArray] = useState({} as DeviceProp[]);
+
+    useEffect(() => {
+        getDevices(token)
+            .then((devices) => {
+                setDevicesArray(devices);
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+    }, [token, devicesArray]);
+
     return (
         <>
             <View style={styles.cardsContainer}>
-                {devicesArray.map((device, index) => {
+                {devicesArray.length > 0 && devicesArray.map((device, index) => {
                     return (
                         <View style={styles.deviceCard} key={index}>
                             <View>
@@ -31,7 +34,7 @@ function MyDevices({navigation}: any) {
                                 <Text>Device name: {device.name}</Text>
                             </View>
                             <TouchableOpacity style={styles.deleteButton} onPress={() => {
-                                deleteDevice(device.id, setDevicesArray);
+                                deleteDeviceFromList(token, device.id, setDevicesArray);
                             }}>
                                 <Text style={styles.buttonText}>X</Text>
                             </TouchableOpacity>
@@ -75,7 +78,8 @@ let styles = StyleSheet.create({
     }
 })
 
-function deleteDevice(
+function deleteDeviceFromList(
+    token:string,
     id:string,
     setDevicesArray: Dispatch<SetStateAction<DeviceProp[]>>
 ) {
@@ -90,9 +94,17 @@ function deleteDevice(
             {
                 text: "Tak",
                 onPress: () => {
-                    setDevicesArray((prevState) => {
-                        return prevState.filter(device => device.id !== id);
+                   deleteDevice(token, id)
+                       .then(() => {
+                          setDevicesArray((prevState) => {
+                            return prevState.filter((device) => {
+                                 return device.id !== id;
+                            })
+                          })
                     })
+                          .catch((error) => {
+                            console.log(error);
+                          })
                 }
             }
         ]

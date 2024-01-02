@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import {useState, Dispatch, SetStateAction, useContext} from "react";
 import {styles} from "../../styles/global";
-import {endpoints} from "../../components/Endpoints";
+import {handleLogin} from "../../components/Endpoints";
 import {useUserCredentials} from "../../components/userCredentialsContext/useUserCredentials";
 
 function Login({navigation}: any){
@@ -63,47 +63,3 @@ function Login({navigation}: any){
 }
 
 export default Login;
-
-function handleLogin(
-    login: string,
-    password: string,
-    setPassword: Dispatch<SetStateAction<string>>,
-    setLoginError: Dispatch<SetStateAction<boolean>>,
-    navigation: any,
-    setVerifiedLogin: Dispatch<SetStateAction<string>>,
-    setVerifiedPassword: Dispatch<SetStateAction<string>>,
-    setToken: Dispatch<SetStateAction<string>>
-){
-    fetch(endpoints.login, {
-        method: 'POST',
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            login,
-            password
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if(data.user_bearer_token){
-            setLoginError(false);
-            setVerifiedLogin(login);
-            setVerifiedPassword(password);
-            setToken(data.user_bearer_token);
-            navigation.navigate("Dashboard");
-        } else {
-            setLoginError(true);
-            Alert.alert("Błąd serwera! Spróbuj ponownie później.");
-        }
-    })
-    .catch((error) => {
-        setLoginError(true);
-        Alert.alert("Podano nieprawidłowe dane logowania.");
-    })
-        .finally(() => {
-            setPassword('');
-        }
-    );
-}

@@ -1,14 +1,15 @@
 /* eslint-disable no-bitwise */
 import {useMemo, useState} from "react";
-import {PermissionsAndroid, Platform} from "react-native";
+import {Alert, PermissionsAndroid, Platform} from "react-native";
 
 import {BleManager, Device} from "react-native-ble-plx";
+import {createDevice} from "./Endpoints";
 
 interface BluetoothLowEnergyApi {
     requestPermissions(): Promise<boolean>;
     scanForPeripherals(): void;
     allDevices: Device[];
-    connectToDevice(deviceId: string): void;
+    connectToDevice(bearer_token: string, deviceId: string, wifiName:string, wifiPass: string): void;
 }
 
 function useBLE(): BluetoothLowEnergyApi {
@@ -93,22 +94,29 @@ function useBLE(): BluetoothLowEnergyApi {
         });
     }
 
-    const connectToDevice = async (deviceId: string) => {
-        console.log("Connecting to device: ", deviceId)
+    const connectToDevice = async (bearer_token: string, deviceId: string, wifiName:string, wifiPass: string) => {
+        if(wifiName === "" || wifiPass === ""){
+            AlertNoWifiCredentials();
+            return;
+        }
         bleManager.connectToDevice(deviceId)
-            .then((device) => {
+            .then(async (device) => {
                 console.log("Connected to device: ", device.id);
-                device.discoverAllServicesAndCharacteristics()
-                    .then((device) => {
-                        console.log("All services and characteristics discovered");
-                        console.log("Device: ", JSON.stringify(device, null, 2));
+                // device.discoverAllServicesAndCharacteristics()
+                //     .then((device) => {
+                //         console.log("All services and characteristics discovered");
+                //         console.log("Device: ", JSON.stringify(device, null, 2));
+                //     })
+                //     .catch((error) => console.log("An error occurred while discovering services and characteristics", error));
+                createDevice(bearer_token, deviceId)
+                    .then((rpiToken: string) => {
+                        sendWiFiCredentials(device, rpiToken, wifiName, wifiPass);
                     })
-                    .catch((error) => console.log("An error occurred while discovering services and characteristics", error));
-                })
+                    .then(() => console.log("Device created successfully"))
+                    .catch((error) => console.log("An error occurred while creating device", error));
+            })
             .catch((error) => console.log("An error occurred while connecting to device", error));
     }
-
-
     return {
         scanForPeripherals,
         requestPermissions,
@@ -118,3 +126,44 @@ function useBLE(): BluetoothLowEnergyApi {
 }
 
 export default useBLE;
+
+
+function sendWiFiCredentials(device: Device, rpiToken:string, wifiName: string, wifiPass: string): string {
+    //ask user if he is sure of connecting to the device
+    Alert.alert(
+        "Connect to device?",
+        `Are you sure you want to connect to ${device.name}?`,
+        [
+            {
+                text: "Cancel",
+                onPress: () => console.log("Cancel Pressed"),
+                style: "cancel"
+            },
+            {
+                text: "Connect",
+                onPress: () => console.log("Connect Pressed")
+            }
+        ]
+    );
+    // const serviceUUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
+    // const characteristicUUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
+    // const data = Buffer.from(rpiToken);
+    // device.writeCharacteristicWithResponseForService(serviceUUID, characteristicUUID, data.toString("base64"))
+    //     .then((characteristic) => console.log("Data written to characteristic", characteristic))
+    //     .catch((error) => console.log("An error occurred while writing data to characteristic", error));
+    return rpiToken;
+}
+function AlertNoWifiCredentials() {
+    Alert.alert(
+        "No Wifi credentials",
+        "Please enter wifi credentials",
+        [
+            {
+                text: "Cancel",
+                onPress: () => console.log("Cancel Pressed"),
+                style: "cancel"
+            }
+        ]
+    );
+}
+

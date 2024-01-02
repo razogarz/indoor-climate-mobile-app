@@ -1,15 +1,19 @@
-import {View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView} from "react-native";
+import {View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, TextInput} from "react-native";
 import {colors} from "../../styles/global";
 import {useEffect, useRef, useState} from "react";
 import useBLE from "../../components/useBLE";
 import Modal from "../../components/modal";
+import {useUserCredentials} from "../../components/userCredentialsContext/useUserCredentials";
 
 function AddDevices(
     {navigation}: any
 ){
+    let { token } = useUserCredentials();
     let scanInterval = useRef<any>(null);
     let isScanning = useRef<boolean>(false);
     const [permissions, setPermissions] = useState(false);
+    const [wifiName, setWifiName] = useState('');
+    const [wifiPass, setWifiPass] = useState('');
     const {
         requestPermissions,
         scanForPeripherals,
@@ -25,6 +29,10 @@ function AddDevices(
 
     return (
         <>
+            <View>
+                <TextInput  style={styles.textInput} placeholder={"Enter wifi name"} onChangeText={text => setWifiName(text)} value={wifiName} />
+                <TextInput  style={styles.textInput} placeholder={"Enter wifi password"} onChangeText={text => setWifiPass(text)} value={wifiPass} secureTextEntry={true} />
+            </View>
         <View style={styles.container}>
             <Text style={styles.text}>Click "Scan" to start scanning area for devices.</Text>
             <View style={styles.actionButtons}>
@@ -73,7 +81,7 @@ function AddDevices(
                                 onPress={() => {
                                     clearInterval(scanInterval.current);
                                     isScanning.current = false;
-                                    connectToDevice(device.id);
+                                    connectToDevice(token ,device.id, wifiName, wifiPass);
                                 }}
                                 key={device.id}
                             >
@@ -143,5 +151,12 @@ let styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: "montserrat-bold",
         textAlign: "center"
+    },
+    textInput: {
+        height: 50,
+        backgroundColor: colors.gray,
+        borderRadius: 10,
+        margin: 10,
+        paddingHorizontal: 10,
     }
 });
