@@ -4,12 +4,15 @@ import {NavigationContainer} from "@react-navigation/native";
 import {useFonts} from "expo-font";
 import UserCredentialsProvider from "./components/userCredentialsContext";
 
+
+
 function App() {
     const [fontIsLoaded] = useFonts({
         'montserrat': require('./assets/fonts/static/Montserrat-Regular.ttf'),
         'montserrat-bold': require('./assets/fonts/static/Montserrat-Bold.ttf'),
         'montserrat-light': require('./assets/fonts/static/Montserrat-Light.ttf'),
     });
+    global.Buffer = require('buffer').Buffer;
 
 
     return fontIsLoaded ? (

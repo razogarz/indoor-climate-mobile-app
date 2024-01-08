@@ -3,7 +3,7 @@ import {useMemo, useState} from "react";
 import {Alert, PermissionsAndroid, Platform} from "react-native";
 
 import {BleManager, Device} from "react-native-ble-plx";
-import {createDevice} from "./Endpoints";
+import {createDevice, deleteDevice} from "./Endpoints";
 
 interface BluetoothLowEnergyApi {
     requestPermissions(): Promise<boolean>;
@@ -32,8 +32,7 @@ function useBLE(): BluetoothLowEnergyApi {
                 const result = await PermissionsAndroid.requestMultiple([
                     PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
                     PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-
+                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
                 ])
 
                 return (
@@ -95,25 +94,38 @@ function useBLE(): BluetoothLowEnergyApi {
     }
 
     const connectToDevice = async (bearer_token: string, deviceId: string, wifiName:string, wifiPass: string) => {
-        if(wifiName === "" || wifiPass === ""){
+        if(wifiPass === ""){
             AlertNoWifiCredentials();
             return;
         }
+        //get currently connected wifissid
+        // const currentWifiSSID = await WifiManager.getCurrentWifiSSID();
+
         bleManager.connectToDevice(deviceId)
             .then(async (device) => {
                 console.log("Connected to device: ", device.id);
                 // device.discoverAllServicesAndCharacteristics()
                 //     .then((device) => {
-                //         console.log("All services and characteristics discovered");
-                //         console.log("Device: ", JSON.stringify(device, null, 2));
-                //     })
-                //     .catch((error) => console.log("An error occurred while discovering services and characteristics", error));
-                createDevice(bearer_token, deviceId)
-                    .then((rpiToken: string) => {
-                        sendWiFiCredentials(device, rpiToken, wifiName, wifiPass);
-                    })
-                    .then(() => console.log("Device created successfully"))
-                    .catch((error) => console.log("An error occurred while creating device", error));
+                //             // console.log("All services and characteristics discovered");
+                //             // console.log("Device: ", JSON.stringify(device, null, 2));
+                //             createDevice(bearer_token, device.id)
+                //                 .then((rpiToken: string) => {
+                //                     sendWiFiCredentials(
+                //                         bearer_token,
+                //                         device,
+                //                         rpiToken,
+                //                         wifiName,
+                //                         wifiPass
+                //                     );
+                //                 })
+                //                 .then(() => console.log("Device created successfully"))
+                //                 .catch((error) => {
+                //                     deleteDevice(bearer_token, device.id)
+                //                     console.log("An error occurred while creating device", error);
+                //                 });
+                //         }
+                //     )
+                //     .catch((error) => console.log("An error occurred while discovering all services and characteristics", error));
             })
             .catch((error) => console.log("An error occurred while connecting to device", error));
     }
@@ -127,31 +139,72 @@ function useBLE(): BluetoothLowEnergyApi {
 
 export default useBLE;
 
-
-function sendWiFiCredentials(device: Device, rpiToken:string, wifiName: string, wifiPass: string): string {
+function sendWiFiCredentials(bearer_token: string, device: Device, rpiToken:string, wifiName: string, wifiPass: string): string {
     //ask user if he is sure of connecting to the device
-    Alert.alert(
-        "Connect to device?",
-        `Are you sure you want to connect to ${device.name}?`,
-        [
-            {
-                text: "Cancel",
-                onPress: () => console.log("Cancel Pressed"),
-                style: "cancel"
-            },
-            {
-                text: "Connect",
-                onPress: () => console.log("Connect Pressed")
-            }
-        ]
-    );
-    // const serviceUUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
-    // const characteristicUUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
-    // const data = Buffer.from(rpiToken);
-    // device.writeCharacteristicWithResponseForService(serviceUUID, characteristicUUID, data.toString("base64"))
-    //     .then((characteristic) => console.log("Data written to characteristic", characteristic))
-    //     .catch((error) => console.log("An error occurred while writing data to characteristic", error));
-    return rpiToken;
+    console.log({
+        rpiToken,
+    })
+    const service = "00000001-710e-4a5b-8d75-3e5b444bc3cf";
+    const characteristic = "00000004-710e-4a5b-8d75-3e5b444bc3cf";
+    // const buffer = new Buffer(wifiName + ":" + wifiPass);
+    const fullMessage = JSON.stringify({
+        wifi_ssid: wifiName,
+        wifi_password: wifiPass,
+        host: "https://krecikiot.cytr.us/",
+        auth_token: rpiToken
+    })
+    const dataBuffer = Buffer.from(fullMessage, "utf8")
+    //utf8
+    device.writeCharacteristicWithoutResponseForService(
+        service,
+        characteristic,
+        dataBuffer.toString("base64")
+    )
+        .then((characteristic) => console.log("Data written to characteristic", JSON.stringify(characteristic, null, 2)))
+        .catch((error) => console.log("An error occurred while writing data to characteristic", JSON.stringify(error, null, 2)))
+        .finally(() => {
+            const response = device.readCharacteristicForService(service, characteristic)
+                .then(r => {
+                    /*
+                    * R - Ready for config
+                    * S - success
+                    * T - failed, invalid token
+                    * D - failed, invalid data
+                    * timeout na czekanie na odpowiedź drugi raz, jak zwróci S to koniec, jak R to wysyłamy jeszcze raz
+                    * */
+                    const response = Buffer.from(r.value || "", "base64").toString("utf8");
+                    console.log("Response: ", response);
+                    switch (response) {
+                        case "R":
+                            break;
+                        case "S":
+                            console.log("Success");
+                            break;
+                        case "T":
+                            console.log("Failed, invalid token");
+                            deleteDevice(bearer_token, device.id)
+                                .then(() => console.log("Device deleted successfully"))
+                                .catch((error) => console.log("An error occurred while deleting device", error));
+                            break;
+                        case "D":
+                            console.log("Failed, invalid data");
+                            deleteDevice(bearer_token, device.id)
+                                .then(() => console.log("Device deleted successfully"))
+                                .catch((error) => console.log("An error occurred while deleting device", error));
+                            break;
+                        default:
+                            console.log("Unknown response");
+                    }
+                    return response;
+                })
+                .catch(e => {
+                    deleteDevice(bearer_token, device.id)
+                        .then(() => console.log("Device deleted successfully"))
+                        .catch((error) => console.log("An error occurred while deleting device", error));
+                    console.log("Error while reading characteristic", e)
+                });
+        });
+    return "";
 }
 function AlertNoWifiCredentials() {
     Alert.alert(
@@ -166,4 +219,3 @@ function AlertNoWifiCredentials() {
         ]
     );
 }
-

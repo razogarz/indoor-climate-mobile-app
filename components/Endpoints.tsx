@@ -1,7 +1,7 @@
 import {Alert} from "react-native";
 import {Dispatch, SetStateAction} from "react";
 
-const url = "https://krecik.bieda.it";
+const url = "https://krecikiot.cytr.us"
 
 const endpoints = {
     register: url + "/users/register",
@@ -64,6 +64,10 @@ export async function handleLogin(
     setVerifiedPassword: (password: string) => void,
     setToken: (token: string) => void
 ){
+    console.log({
+        login,
+        password
+    })
     return fetch(endpoints.login, {
         method: 'POST',
         headers: {
@@ -83,14 +87,23 @@ export async function handleLogin(
                 setVerifiedPassword(password);
                 setToken(data.user_bearer_token);
                 navigation.navigate("Dashboard");
-            } else {
+            }
+            else if(data.message === "Could not find user with provided credentials."){
+                setLoginError(true);
+                Alert.alert("Podano nieprawidłowe dane logowania.");
+            }
+            else {
                 setLoginError(true);
                 Alert.alert("Błąd serwera! Spróbuj ponownie później.");
+                console.log({
+                    data
+                })
             }
         })
         .catch((error) => {
             setLoginError(true);
             Alert.alert("Podano nieprawidłowe dane logowania.");
+            console.log(error)
         })
         .finally(() => {
                 setPassword('');
@@ -116,6 +129,12 @@ export async function getDevices(token: string){
         });
 }
 
+type createDeviceResponse = {
+    device_bearer_token: string
+    device_id: string
+    name: string
+}
+
 export async function createDevice(token: string, deviceId: string){
     return fetch(endpoints.devices, {
         method: 'POST',
@@ -129,11 +148,12 @@ export async function createDevice(token: string, deviceId: string){
         })
     })
         .then(response => response.json())
-        .then(data => {
-            return data;
+        .then((data: createDeviceResponse) => {
+            return data.device_bearer_token;
         })
         .catch((error) => {
             Alert.alert("Błąd serwera! Spróbuj ponownie później.");
+            return "";
         });
 }
 
