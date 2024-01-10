@@ -11,12 +11,12 @@ import {BluetoothLowEnergyApi} from "../types/types";
 
 
 function useBLE(): BluetoothLowEnergyApi {
-
     const bleManager = useMemo(() => {return new BleManager();}, []);
-    const [allDevices, setAllDevices] = useState<Device[]>([]);
+    const [bleDevicesList, setBleDevicesList] = useState<Device[]>([]);
 
     const requestPermissions = async () => {
         if (Platform.OS === 'ios') {
+            //nie korzystamy z ios
             return true
         }
         if (Platform.OS === 'android' && PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION) {
@@ -40,58 +40,21 @@ function useBLE(): BluetoothLowEnergyApi {
                 )
             }
         }
-
         return false
     }
 
-    const _isDuplicteDevice = (devices: Device[], nextDevice: Device) => {
-        return devices.some((device) => device.id === nextDevice.id);
-    };
-
-    async function _enableBluetooth() {
-        const isOn = await bleManager.state();
-        if( isOn !== "PoweredOn")
-            bleManager.enable()
-                .then(() => console.log("Bluetooth is now on"))
-                .catch((error) => console.log("An error occurred while enabling Bluetooth", error));
-        return isOn === "PoweredOn";
-    }
-
     const scanForPeripherals = async () => {
-        await _enableBluetooth();
-        const devices = await _singleScan();
-        setAllDevices((prev) => {
+        await _enableBluetooth(bleManager);
+        const devices = await _singleScan(bleManager);
+        setBleDevicesList((prev) => {
             const savedDevicesMAC = prev.map((device) => device.id);
             const newDevices = devices.filter((device) => !savedDevicesMAC.includes(device.id));
             return [...prev, ...newDevices];
         });
     }
 
-    async function _singleScan(): Promise<Device[]> {
-        const devices: Device[] = [];
-        bleManager.startDeviceScan(null, null, (error, device) => {
-            if (error) {
-                bleManager.stopDeviceScan();
-                return;
-            }
-            if (
-                device
-                && !_isDuplicteDevice(devices, device)
-                && device.name !== null
-            ) {
-                bleManager.stopDeviceScan();
-                devices.push(device);
-            }
-        });
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                bleManager.stopDeviceScan();
-                resolve(devices);
-            }, 100);
-        });
-    }
-
     const connectToDevice = async (bearer_token: string, deviceId: string, wifiPass: string) => {
+
         let wifiName = "";
         if(wifiPass === ""){
             AlertNoWifiCredentials();
@@ -104,6 +67,7 @@ function useBLE(): BluetoothLowEnergyApi {
             .catch((error) => {
                 console.log(error);
             });
+        //rozpoczynamy proces łączenia z urządzeniem
         bleManager.connectToDevice(deviceId)
             .then(async (device) => {
                 device.discoverAllServicesAndCharacteristics()
@@ -132,11 +96,46 @@ function useBLE(): BluetoothLowEnergyApi {
     return {
         scanForPeripherals,
         requestPermissions,
-        allDevices,
+        bleDevicesList,
         connectToDevice
     };
 }
+const _isDuplicteDevice = (devices: Device[], nextDevice: Device) => {
+    return devices.some((device) => device.id === nextDevice.id);
+};
 
+async function _enableBluetooth(bleManager: BleManager) {
+    const isOn = await bleManager.state();
+    if( isOn !== "PoweredOn")
+        bleManager.enable()
+            .then(() => console.log("Bluetooth is now on"))
+            .catch((error) => console.log("An error occurred while enabling Bluetooth", error));
+    return isOn === "PoweredOn";
+}
+
+async function _singleScan(bleManager:BleManager): Promise<Device[]> {
+    const devices: Device[] = [];
+    bleManager.startDeviceScan(null, null, (error, device) => {
+        if (error) {
+            bleManager.stopDeviceScan();
+            return;
+        }
+        if (
+            device
+            && !_isDuplicteDevice(devices, device)
+            && device.name !== null
+        ) {
+            bleManager.stopDeviceScan();
+            devices.push(device);
+        }
+    });
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            bleManager.stopDeviceScan();
+            resolve(devices);
+        }, 100);
+    });
+}
 async function sendWiFiCredentials(bearer_token: string, device: Device, rpiToken: string, wifiName: string, wifiPass: string): Promise<string> {
     const service = "00000001-710e-4a5b-8d75-3e5b444bc3cf";
     const characteristic = "00000004-710e-4a5b-8d75-3e5b444bc3cf";
@@ -146,9 +145,7 @@ async function sendWiFiCredentials(bearer_token: string, device: Device, rpiToke
         host: "https://krecikiot.cytr.us/",
         auth_token: rpiToken
     });
-    console.log("Message: ", message);
     const fullEncryptedMessage = await encryptData(message)
-    //utf8
     device.writeCharacteristicWithoutResponseForService(
         service,
         characteristic,

@@ -3,7 +3,7 @@ import {Device} from "react-native-ble-plx";
 export type BluetoothLowEnergyApi = {
     requestPermissions(): Promise<boolean>;
     scanForPeripherals(): void;
-    allDevices: Device[];
+    bleDevicesList: Device[];
     connectToDevice(bearer_token: string, deviceId: string, wifiPass: string): void;
 }
 

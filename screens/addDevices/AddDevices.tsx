@@ -16,7 +16,7 @@ export default function AddDevices(
     const {
         requestPermissions,
         scanForPeripherals,
-        allDevices,
+        bleDevicesList,
         connectToDevice
     } = useBLE();
 
@@ -74,10 +74,10 @@ export default function AddDevices(
                 {isScanning.current ? "Scanning..." : "Not scanning"}
             </Text>
             <ScrollView>
-                {allDevices.length > 0 && (
+                {bleDevicesList.length > 0 && (
                     <ScrollView contentContainerStyle={styles.bluetoothDevices}>
                         <Text style={styles.text}>Devices found:</Text>
-                        {allDevices.map((device, index) => (
+                        {bleDevicesList.map((device, index) => (
                             <TouchableOpacity
                                 style={styles.bluetoothDeviceButton}
                                 onPress={() => {
