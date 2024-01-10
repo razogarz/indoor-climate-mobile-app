@@ -3,14 +3,14 @@ import {WeatherRecord} from "../../screens/dashboard/Dashboard";
 
 
 function Record(props: { record: WeatherRecord }) {
-    const { id, device_id, temperature, humidity, created_at } = props.record;
+    const { device_id, pressure, temperature, when } = props.record;
     return (
         <View style={styles.record}>
-            <Text>ID: {id}</Text>
+            <Text>ID: {device_id}</Text>
             <Text>Device ID: {device_id}</Text>
             <Text>Temperature: {temperature}</Text>
-            <Text>Humidity: {humidity}</Text>
-            <Text>Created at: {created_at}</Text>
+            <Text>Pressure: {pressure}</Text>
+            <Text>Created at: {when}</Text>
         </View>
     )
 }

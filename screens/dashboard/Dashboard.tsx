@@ -9,15 +9,20 @@ import { colors } from "../../styles/global";
 import Modal from "../../components/modal";
 import {useUserCredentials} from "../../components/userCredentialsContext/useUserCredentials";
 import {SetStateAction, useEffect, useState} from "react";
-import {getRecords} from "../../components/Endpoints";
+import {getDevices, getRecords} from "../../components/Endpoints";
 import Record from "../../components/record";
 
+// {
+//     "when": "2024-01-10T16:00:00.054000Z",
+//     "temperature": 25.02,
+//     "pressure": 1002.2,
+//     "device_id": 76
+// },
 export type WeatherRecord = {
-    id: string,
     device_id: string,
     temperature: number,
-    humidity: number,
-    created_at: string
+    pressure: number,
+    when: string
 }
 
 function Dashboard({navigation}: any) {
@@ -28,78 +33,29 @@ function Dashboard({navigation}: any) {
     const [dateTo, setDateTo] = useState(new Date());
     const [pickStartDate, setPickStartDate] = useState(false);
     const [pickEndDate, setPickEndDate] = useState(false);
-    const [selectedDevice, setSelectedDevice] = useState("No device selected");
+    const [selectedDevice, setSelectedDevice] = useState<string>();
     const [devicesArray, setDevicesArray] = useState([
         {
-            id: "1",
+            device_id: "1",
             name: "device-1",
         }
     ]);
-    const [records, setRecords] = useState([
-        {
-            id: "1",
-            device_id: "1",
-            temperature: 0,
-            humidity: 0,
-            created_at: "2021-09-16T14:08:38.000000Z"
-        },
-        {
-            id: "2",
-            device_id: "1",
-            temperature: 0,
-            humidity: 0,
-            created_at: "2021-09-16T14:08:38.000000Z"
-        },
-        {
-            id: "3",
-            device_id: "1",
-            temperature: 0,
-            humidity: 0,
-            created_at: "2021-09-16T14:08:38.000000Z"
-        },
-        {
-            id: "4",
-            device_id: "1",
-            temperature: 0,
-            humidity: 0,
-            created_at: "2021-09-16T14:08:38.000000Z"
-        },
-        {
-            id: "5",
-            device_id: "1",
-            temperature: 0,
-            humidity: 0,
-            created_at: "2021-09-16T14:08:38.000000Z"
-        },
-        {
-            id: "6",
-            device_id: "1",
-            temperature: 0,
-            humidity: 0,
-            created_at: "2021-09-16T14:08:38.000000Z"
-        },
-        {
-            id: "7",
-            device_id: "1",
-            temperature: 0,
-            humidity: 0,
-            created_at: "2021-09-16T14:08:38.000000Z"
-        },
-        {
-            id: "8",
-            device_id: "1",
-            temperature: 0,
-            humidity: 0,
-            created_at: "2021-09-16T14:08:38.000000Z"
-        },
-        {
-            id: "9",
-            device_id: "1",
-            temperature: 0,
-            humidity: 0,
-            created_at: "2021-09-16T14:08:38.000000Z"
-        }
-    ]);
+    const [records, setRecords] = useState([] as WeatherRecord[]);
+
+    useEffect(() => {
+        getDevices(token)
+            .then((devices) => {
+                console.log(devices)
+                setDevicesArray(devices);
+                setSelectedDevice(prev => {
+                    prev = devices[0].device_id;
+                    return prev;
+                })
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+    }, [token]);
 
     return (
         <>
@@ -108,11 +64,13 @@ function Dashboard({navigation}: any) {
                     <Text style={styles.welcomeText}>Welcome, {verifiedLogin}!</Text>
                     <Text> Choose device to display data from: </Text>
                     <Picker style={styles.picker} selectedValue={selectedDevice} onValueChange={
-                        (itemValue: SetStateAction<string>) => setSelectedDevice(itemValue)
+                        (itemValue, itemIndex) => {
+                            setSelectedDevice(itemValue);
+                        }
                     }>
                         {devicesArray.map((device, index) => {
                             return (
-                                <Picker.Item key={index} label={device.name} value={device.id} />
+                                <Picker.Item key={index} label={device.name} value={device.device_id} />
                             )
                         })}
                     </Picker>
@@ -155,8 +113,9 @@ function Dashboard({navigation}: any) {
                         <View style={styles.submitButtonContainer}>
                             <TouchableOpacity style={styles.submitButton} onPress={() => {
                                 getRecords(token, selectedDevice, dateFrom.toLocaleDateString(), dateTo.toLocaleDateString())
-                                    .then((data) => {
-                                        console.log(data)
+                                    .then((data:WeatherRecord[]) => {
+                                        console.log(data);
+                                        setRecords(data);
                                     })
                                     .catch((error) => {
                                         console.log(error)

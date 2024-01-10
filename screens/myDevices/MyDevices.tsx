@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, TouchableOpacity, Alert} from "react-native";
+import {View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView} from "react-native";
 import {Dispatch, SetStateAction, useEffect, useState} from "react";
 import Modal from "../../components/modal";
 import {useUserCredentials} from "../../components/userCredentialsContext/useUserCredentials";
@@ -6,7 +6,7 @@ import {deleteDevice, getDevices} from "../../components/Endpoints";
 // import {Dispatch, SetStateAction, useState} from "react";
 
 type DeviceProp = {
-    id: string,
+    device_id: string,
     name: string
 }
 function MyDevices({navigation}: any) {
@@ -16,32 +16,33 @@ function MyDevices({navigation}: any) {
     useEffect(() => {
         getDevices(token)
             .then((devices) => {
+                console.log(devices);
                 setDevicesArray(devices);
             })
             .catch((error) => {
                 console.log(error);
             })
-    }, [token, devicesArray]);
+    }, [token]);
 
     return (
         <>
-            <View style={styles.cardsContainer}>
+            <ScrollView contentContainerStyle={styles.cardsContainer}>
                 {devicesArray.length > 0 && devicesArray.map((device, index) => {
                     return (
                         <View style={styles.deviceCard} key={index}>
                             <View>
-                                <Text>Device id: {device.id}</Text>
+                                <Text>Device id: {device.device_id}</Text>
                                 <Text>Device name: {device.name}</Text>
                             </View>
                             <TouchableOpacity style={styles.deleteButton} onPress={() => {
-                                deleteDeviceFromList(token, device.id, setDevicesArray);
+                                deleteDeviceFromList(token, device.device_id, setDevicesArray);
                             }}>
                                 <Text style={styles.buttonText}>X</Text>
                             </TouchableOpacity>
                         </View>
                     )
                 })}
-            </View>
+            </ScrollView>
             <Modal navigation={navigation} />
         </>
 
@@ -54,7 +55,8 @@ let styles = StyleSheet.create({
     cardsContainer: {
         display:"flex",
         justifyContent: "center",
-        alignItems: "center"
+        alignItems: "center",
+        marginBottom: 100
     },
     deviceCard: {
         backgroundColor: "#fff",
@@ -94,11 +96,16 @@ function deleteDeviceFromList(
             {
                 text: "Tak",
                 onPress: () => {
+                    console.log({
+                        token,
+                        id
+                    })
                    deleteDevice(token, id)
-                       .then(() => {
+                       .then((response) => {
+                           console.log(JSON.stringify(response));
                           setDevicesArray((prevState) => {
                             return prevState.filter((device) => {
-                                 return device.id !== id;
+                                 return device.device_id !== id;
                             })
                           })
                     })

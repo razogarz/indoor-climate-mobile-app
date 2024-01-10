@@ -43,7 +43,8 @@
           "modes": ["peripheral", "central"],
           "bluetoothAlwaysPermission": "Allow $(PRODUCT_NAME) to connect to bluetooth devices"
         }
-      ]
+      ],
+      ["react-native-wifi-reborn"]
     ],
     "extra": {
       "router": {

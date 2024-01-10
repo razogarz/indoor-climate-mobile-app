@@ -7,6 +7,7 @@ const endpoints = {
     register: url + "/users/register",
     login: url + "/users/login",
     devices: url + "/devices",
+    records: url + "/records"
 }
 
 export async function handleRegister(
@@ -158,12 +159,13 @@ export async function createDevice(token: string, deviceId: string){
 }
 
 export async function deleteDevice(token: string, deviceId: string){
-    return fetch(endpoints.devices + "/" + deviceId, {
+    const url = `${endpoints.devices}/${deviceId}`;
+    return fetch(url, {
         method: 'DELETE',
         headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json',
-            'Authorization': token
+            'Authorization': `Bearer ${token}`
         }
     })
         .then(response => response.json())
@@ -198,16 +200,20 @@ export async function logDevice(
 
 export async function getRecords(
     token: string,
-    deviceId: string,
+    deviceId: string | undefined,
     from: string,
     to: string
 ) {
-    const urlRep = new URL(endpoints.devices)
-    urlRep.searchParams.append("device_id", deviceId);
-    urlRep.searchParams.append("start_date", from);
-    urlRep.searchParams.append("end_date", to);
-
-    return fetch(urlRep.toString(), {
+    if(token === "" || deviceId === undefined) return [];
+    const urlRep = `${endpoints.records}?device_id=${deviceId}`;
+    // urlRep.searchParams.append("start_date", from);
+    // urlRep.searchParams.append("end_date", to);
+    console.log(
+        token,
+        deviceId,
+        urlRep
+    )
+    return fetch(urlRep, {
         method: 'GET',
         headers: {
             Accept: 'application/json',
@@ -216,12 +222,10 @@ export async function getRecords(
         }
     })
         .then(response => {
-                console.log(response);
                 return response.json();
             }
         )
         .then(data => {
-            console.log(data);
             return data;
         })
         .catch((error) => {

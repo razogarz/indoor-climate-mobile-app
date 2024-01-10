@@ -30,8 +30,11 @@ function AddDevices(
     return (
         <>
             <View>
-                <TextInput  style={styles.textInput} placeholder={"Enter wifi name"} onChangeText={text => setWifiName(text)} value={wifiName} />
-                <TextInput  style={styles.textInput} placeholder={"Enter wifi password"} onChangeText={text => setWifiPass(text)} value={wifiPass} secureTextEntry={true} />
+                <TextInput  style={styles.textInput} placeholder={"Enter wifi password"}
+                            onChangeText={text => {
+                                setWifiPass(text)}
+                            }
+                            value={wifiPass} secureTextEntry={true} />
             </View>
         <View style={styles.container}>
             <Text style={styles.text}>Click "Scan" to start scanning area for devices.</Text>
@@ -73,7 +76,7 @@ function AddDevices(
             </Text>
             <ScrollView>
                 {allDevices.length > 0 && (
-                    <SafeAreaView style={styles.bluetoothDevices}>
+                    <ScrollView contentContainerStyle={styles.bluetoothDevices}>
                         <Text style={styles.text}>Devices found:</Text>
                         {allDevices.map((device, index) => (
                             <TouchableOpacity
@@ -88,7 +91,7 @@ function AddDevices(
                                 <Text>{device.name || "Unknown device " + index}</Text>
                             </TouchableOpacity>
                         ))}
-                    </SafeAreaView>
+                    </ScrollView>
                 )}
             </ScrollView>
         </ScrollView>
@@ -105,6 +108,7 @@ let styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-between",
         padding: 15,
+        marginBottom: 10,
         width: "100%",
     },
     actionButtons: {
@@ -123,7 +127,9 @@ let styles = StyleSheet.create({
     bluetoothDevices: {
         padding: 15,
         display: "flex",
-        alignItems: "center"
+        alignItems: "center",
+        marginBottom: 100,
+        height: "100%"
     },
     bluetoothDeviceButton: {
         backgroundColor: colors.gray,
