@@ -3,7 +3,7 @@ import {colors} from "../../styles/global";
 import { FontAwesome5 } from '@expo/vector-icons';
 import {useRoute} from "@react-navigation/native";
 
-function Modal({navigation}: any){
+export default function Modal({navigation}: any){
     let route = useRoute();
     return (
         <View style={styles.modal}>
@@ -33,13 +33,14 @@ function Modal({navigation}: any){
     )
 }
 
-export default Modal;
+function isActive(screenName: string, route: string){
+    return route === screenName ? styles.active : null;
+}
 
 let styles = StyleSheet.create({
     modal: {
         height: 75,
         width: "100%",
-        position: "absolute",
         bottom: 0,
         left: 0,
         right: 0,
@@ -66,6 +67,3 @@ let styles = StyleSheet.create({
     }
 });
 
-function isActive(screenName: string, route: string){
-    return route === screenName ? styles.active : null;
-}

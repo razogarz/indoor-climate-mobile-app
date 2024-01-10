@@ -1,7 +1,7 @@
 import {View, Text, StyleSheet, TextInput, TouchableOpacity, Alert} from 'react-native';
 import {useState, Dispatch, SetStateAction} from "react";
 import {styles} from "../../styles/global";
-import { handleRegister} from "../../components/Endpoints";
+import { handleRegister} from "../../hooks/Endpoints";
 
 function Register({navigation}: any){
     const [login, setLogin] = useState('');

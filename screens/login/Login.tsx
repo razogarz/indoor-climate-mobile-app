@@ -8,8 +8,8 @@ import {
 } from "react-native";
 import {useState, Dispatch, SetStateAction, useContext} from "react";
 import {styles} from "../../styles/global";
-import {handleLogin} from "../../components/Endpoints";
-import {useUserCredentials} from "../../components/userCredentialsContext/useUserCredentials";
+import {handleLogin} from "../../hooks/Endpoints";
+import {useUserCredentials} from "../../hooks/useUserCredentials/useUserCredentials";
 
 function Login({navigation}: any){
     const {setVerifiedLogin, setVerifiedPassword, setToken} = useUserCredentials();

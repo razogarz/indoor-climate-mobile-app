@@ -1,21 +1,19 @@
 import {View, Text, StyleSheet} from "react-native";
-import {WeatherRecord} from "../../screens/dashboard/Dashboard";
+import {WeatherRecord} from "../../types/types";
 
 
-function Record(props: { record: WeatherRecord }) {
+export default function WeatherRecordCard(props: { record: WeatherRecord }) {
     const { device_id, pressure, temperature, when } = props.record;
     return (
         <View style={styles.record}>
-            <Text>ID: {device_id}</Text>
             <Text>Device ID: {device_id}</Text>
             <Text>Temperature: {temperature}</Text>
             <Text>Pressure: {pressure}</Text>
-            <Text>Created at: {when}</Text>
+            <Text>Created at: {when.slice(0,10)}</Text>
+            <Text>Time: {when.slice(11,19)}</Text>
         </View>
     )
 }
-
-export default Record;
 
 let styles = StyleSheet.create({
     record: {

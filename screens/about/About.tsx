@@ -2,7 +2,7 @@ import {View, Text, StyleSheet} from "react-native";
 import {colors} from "../../styles/global";
 import Modal from "../../components/modal";
 
-function About({navigation}: any){
+export default function About({navigation}: any){
     return (
         <>
             <View style={styles.container}>
@@ -28,8 +28,6 @@ function About({navigation}: any){
 
     )
 }
-
-export default About;
 
 let styles = StyleSheet.create({
     container: {

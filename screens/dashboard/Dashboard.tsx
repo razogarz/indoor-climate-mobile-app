@@ -7,28 +7,17 @@ import {Picker} from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { colors } from "../../styles/global";
 import Modal from "../../components/modal";
-import {useUserCredentials} from "../../components/userCredentialsContext/useUserCredentials";
+import {useUserCredentials} from "../../hooks/useUserCredentials/useUserCredentials";
 import {SetStateAction, useEffect, useState} from "react";
-import {getDevices, getRecords} from "../../components/Endpoints";
-import Record from "../../components/record";
+import {getDevices, getRecords} from "../../hooks/Endpoints";
+import Record from "../../components/weatherRecordCard";
+import {WeatherRecord} from "../../types/types";
 
-// {
-//     "when": "2024-01-10T16:00:00.054000Z",
-//     "temperature": 25.02,
-//     "pressure": 1002.2,
-//     "device_id": 76
-// },
-export type WeatherRecord = {
-    device_id: string,
-    temperature: number,
-    pressure: number,
-    when: string
-}
+
 
 function Dashboard({navigation}: any) {
     let { verifiedLogin, token} = useUserCredentials();
     if(verifiedLogin === ""){ verifiedLogin = "User" }
-    const [interval, setInterval] = useState(0);
     const [dateFrom, setDateFrom] = useState(new Date());
     const [dateTo, setDateTo] = useState(new Date());
     const [pickStartDate, setPickStartDate] = useState(false);
@@ -59,7 +48,7 @@ function Dashboard({navigation}: any) {
 
     return (
         <>
-            <View>
+            <ScrollView>
                 <View>
                     <Text style={styles.welcomeText}>Welcome, {verifiedLogin}!</Text>
                     <Text> Choose device to display data from: </Text>
@@ -76,11 +65,6 @@ function Dashboard({navigation}: any) {
                     </Picker>
                 </View>
                 <View>
-                    <Text>Choose time interval: </Text>
-                    <TextInput keyboardType={"numeric"} placeholder={"Enter interval in minutes"} style={styles.numberInput}
-                               onChange={(event) => {
-                        setInterval(parseInt(event.nativeEvent.text));
-                    }} />
                     <View style={styles.intervalsContainer}>
                         <TouchableOpacity style={styles.button} onPress={() => {
                             setPickStartDate(true);
@@ -129,14 +113,14 @@ function Dashboard({navigation}: any) {
                     </View>
                 </View>
                 <Text>Records: </Text>
-                <ScrollView>
-                    {records.map((record: WeatherRecord, index) => {
+                <View>
+                    {records.length > 0 && records.map((record: WeatherRecord, index) => {
                         return (
                             <Record key={index} record={record} />
                         )
                     })}
-                </ScrollView>
-            </View>
+                </View>
+            </ScrollView>
             <Modal navigation={navigation} />
         </>
     )

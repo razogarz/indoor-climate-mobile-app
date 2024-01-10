@@ -205,9 +205,8 @@ export async function getRecords(
     to: string
 ) {
     if(token === "" || deviceId === undefined) return [];
+    // const urlRep = `${endpoints.records}?device_id=${deviceId}&start_date=${from}&end_date=${to}`;
     const urlRep = `${endpoints.records}?device_id=${deviceId}`;
-    // urlRep.searchParams.append("start_date", from);
-    // urlRep.searchParams.append("end_date", to);
     console.log(
         token,
         deviceId,

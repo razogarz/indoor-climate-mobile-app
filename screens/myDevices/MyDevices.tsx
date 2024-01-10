@@ -1,17 +1,13 @@
 import {View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView} from "react-native";
 import {Dispatch, SetStateAction, useEffect, useState} from "react";
 import Modal from "../../components/modal";
-import {useUserCredentials} from "../../components/userCredentialsContext/useUserCredentials";
-import {deleteDevice, getDevices} from "../../components/Endpoints";
-// import {Dispatch, SetStateAction, useState} from "react";
+import {useUserCredentials} from "../../hooks/useUserCredentials/useUserCredentials";
+import {deleteDevice, getDevices} from "../../hooks/Endpoints";
+import {DeviceProperties} from "../../types/types";
 
-type DeviceProp = {
-    device_id: string,
-    name: string
-}
-function MyDevices({navigation}: any) {
+export default function MyDevices({navigation}: any) {
     const {token} = useUserCredentials();
-    const [devicesArray, setDevicesArray] = useState({} as DeviceProp[]);
+    const [devicesArray, setDevicesArray] = useState({} as DeviceProperties[]);
 
     useEffect(() => {
         getDevices(token)
@@ -49,7 +45,43 @@ function MyDevices({navigation}: any) {
     )
 }
 
-export default MyDevices;
+function deleteDeviceFromList(
+    token:string,
+    id:string,
+    setDevicesArray: Dispatch<SetStateAction<DeviceProperties[]>>
+) {
+    Alert.alert(
+        "Usuwanie urządzenia",
+        "Czy na pewno chcesz usunąć to urządzenie?",
+        [
+            {
+                text: "Nie",
+                style: "cancel"
+            },
+            {
+                text: "Tak",
+                onPress: () => {
+                    console.log({
+                        token,
+                        id
+                    })
+                    deleteDevice(token, id)
+                        .then((response) => {
+                            console.log(JSON.stringify(response));
+                            setDevicesArray((prevState) => {
+                                return prevState.filter((device) => {
+                                    return device.device_id !== id;
+                                })
+                            })
+                        })
+                        .catch((error) => {
+                            console.log(error);
+                        })
+                }
+            }
+        ]
+    )
+}
 
 let styles = StyleSheet.create({
     cardsContainer: {
@@ -80,40 +112,3 @@ let styles = StyleSheet.create({
     }
 })
 
-function deleteDeviceFromList(
-    token:string,
-    id:string,
-    setDevicesArray: Dispatch<SetStateAction<DeviceProp[]>>
-) {
-    Alert.alert(
-        "Usuwanie urządzenia",
-        "Czy na pewno chcesz usunąć to urządzenie?",
-        [
-            {
-                text: "Nie",
-                style: "cancel"
-            },
-            {
-                text: "Tak",
-                onPress: () => {
-                    console.log({
-                        token,
-                        id
-                    })
-                   deleteDevice(token, id)
-                       .then((response) => {
-                           console.log(JSON.stringify(response));
-                          setDevicesArray((prevState) => {
-                            return prevState.filter((device) => {
-                                 return device.device_id !== id;
-                            })
-                          })
-                    })
-                          .catch((error) => {
-                            console.log(error);
-                          })
-                }
-            }
-        ]
-    )
-}

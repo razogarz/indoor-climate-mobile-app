@@ -1,18 +1,17 @@
 import {View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, TextInput} from "react-native";
 import {colors} from "../../styles/global";
 import {useEffect, useRef, useState} from "react";
-import useBLE from "../../components/useBLE";
+import useBLE from "../../hooks/useBLE";
 import Modal from "../../components/modal";
-import {useUserCredentials} from "../../components/userCredentialsContext/useUserCredentials";
+import {useUserCredentials} from "../../hooks/useUserCredentials/useUserCredentials";
 
-function AddDevices(
+export default function AddDevices(
     {navigation}: any
 ){
     let { token } = useUserCredentials();
     let scanInterval = useRef<any>(null);
     let isScanning = useRef<boolean>(false);
     const [permissions, setPermissions] = useState(false);
-    const [wifiName, setWifiName] = useState('');
     const [wifiPass, setWifiPass] = useState('');
     const {
         requestPermissions,
@@ -84,7 +83,7 @@ function AddDevices(
                                 onPress={() => {
                                     clearInterval(scanInterval.current);
                                     isScanning.current = false;
-                                    connectToDevice(token ,device.id, wifiName, wifiPass);
+                                    connectToDevice(token ,device.id, wifiPass);
                                 }}
                                 key={device.id}
                             >
@@ -99,8 +98,6 @@ function AddDevices(
     </>
     )
 }
-
-export default AddDevices;
 
 let styles = StyleSheet.create({
     container: {

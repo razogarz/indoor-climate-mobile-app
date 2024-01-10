@@ -2,7 +2,7 @@ import React from "react";
 import Navigator from "./routes/MainStack";
 import {NavigationContainer} from "@react-navigation/native";
 import {useFonts} from "expo-font";
-import UserCredentialsProvider from "./components/userCredentialsContext";
+import UserCredentialsProvider from "./hooks/useUserCredentials";
 
 
 
