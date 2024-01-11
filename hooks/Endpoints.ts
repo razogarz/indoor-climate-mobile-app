@@ -204,18 +204,18 @@ export async function getRecords(
     from: Date,
     to: Date
 ) {
-    if(token === "" || deviceId === undefined) return [];
+    if(token === "" || !deviceId) return [];
     let fromShifted = new Date(JSON.parse(JSON.stringify(from)))
     let toShifted = new Date(JSON.parse(JSON.stringify(to)))
 
-    fromShifted = shiftDateByHours(fromShifted, -16);
-    toShifted = shiftDateByHours(toShifted, 8);
+    // fromShifted = shiftDateByHours(fromShifted, -16);
+    // toShifted = shiftDateByHours(toShifted, 8);
 
     const fromISO = fromShifted.toISOString()
     const toISO = toShifted.toISOString()
     console.log({
-        from: new Date(fromShifted),
-        to: new Date(toShifted)
+        from: fromShifted,
+        to: toShifted
     });
     const urlRep = `${endpoints.records}?device_id=${deviceId}&start_date=${fromISO}&end_date=${toISO}`;
     return fetch(urlRep, {
@@ -239,5 +239,5 @@ export async function getRecords(
 }
 
 function shiftDateByHours(date: Date, hours: number){
-    return new Date(date.setTime(date.getTime() + hours*60*60*1000));
+    return new Date(date.setHours(date.getHours() + hours));
 }
