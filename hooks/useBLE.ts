@@ -7,13 +7,14 @@ import {BleManager, Device} from "react-native-ble-plx";
 import {createDevice, deleteDevice} from "./Endpoints";
 import Aes from 'react-native-aes-crypto'
 import {BluetoothLowEnergyApi} from "../types/types";
+import {useUserCredentials} from "./useUserCredentials/useUserCredentials";
 
 
 
 function useBLE(): BluetoothLowEnergyApi {
     const bleManager = useMemo(() => {return new BleManager();}, []);
     const [bleDevicesList, setBleDevicesList] = useState<Device[]>([]);
-
+    const {setAddDeviceSignal} = useUserCredentials();
     const requestPermissions = async () => {
         if (Platform.OS === 'ios') {
             //nie korzystamy z ios
@@ -82,7 +83,10 @@ function useBLE(): BluetoothLowEnergyApi {
                                         wifiPass
                                     );
                                 })
-                                .then(() => console.log("Device created successfully"))
+                                .then(() => {
+                                    setAddDeviceSignal(prev => !prev);
+                                    console.log("Device created successfully")
+                                })
                                 .catch((error) => {
                                     deleteDevice(bearer_token, device.id)
                                     console.log("An error occurred while creating device", error);
@@ -91,7 +95,7 @@ function useBLE(): BluetoothLowEnergyApi {
                     )
                     .catch((error) => console.log("An error occurred while discovering all services and characteristics", error));
             })
-            .catch((error) => console.log("An error occurred while connecting to device", error));
+            .catch((error) => console.log("An error occurred while connecting to device", error))
     }
     return {
         scanForPeripherals,
@@ -123,9 +127,8 @@ async function _singleScan(bleManager:BleManager): Promise<Device[]> {
         if (
             device
             && !_isDuplicteDevice(devices, device)
-            && device.name !== null
         ) {
-            bleManager.stopDeviceScan();
+            // bleManager.stopDeviceScan();
             devices.push(device);
         }
     });
@@ -133,7 +136,7 @@ async function _singleScan(bleManager:BleManager): Promise<Device[]> {
         setTimeout(() => {
             bleManager.stopDeviceScan();
             resolve(devices);
-        }, 100);
+        }, 1000);
     });
 }
 async function sendWiFiCredentials(bearer_token: string, device: Device, rpiToken: string, wifiName: string, wifiPass: string): Promise<string> {

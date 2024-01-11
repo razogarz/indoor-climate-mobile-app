@@ -16,35 +16,16 @@ import {WeatherRecord} from "../../types/types";
 
 
 function Dashboard({navigation}: any) {
-    let { verifiedLogin, token} = useUserCredentials();
+    let { verifiedLogin, token, devices} = useUserCredentials();
     if(verifiedLogin === ""){ verifiedLogin = "User" }
-    const [dateFrom, setDateFrom] = useState(new Date());
-    const [dateTo, setDateTo] = useState(new Date());
+    const [dateFrom, setDateFrom] = useState<Date>(new Date());
+    const [dateTo, setDateTo] = useState<Date>(new Date());
     const [pickStartDate, setPickStartDate] = useState(false);
     const [pickEndDate, setPickEndDate] = useState(false);
     const [selectedDevice, setSelectedDevice] = useState<string>();
-    const [devicesArray, setDevicesArray] = useState([
-        {
-            device_id: "1",
-            name: "device-1",
-        }
-    ]);
     const [records, setRecords] = useState([] as WeatherRecord[]);
 
-    useEffect(() => {
-        getDevices(token)
-            .then((devices) => {
-                console.log(devices)
-                setDevicesArray(devices);
-                setSelectedDevice(prev => {
-                    prev = devices[0].device_id;
-                    return prev;
-                })
-            })
-            .catch((error) => {
-                console.log(error);
-            })
-    }, [token]);
+
 
     return (
         <>
@@ -57,9 +38,9 @@ function Dashboard({navigation}: any) {
                             setSelectedDevice(itemValue);
                         }
                     }>
-                        {devicesArray.map((device, index) => {
+                        {devices.length > 0 && devices.map((device, index) => {
                             return (
-                                <Picker.Item key={index} label={device.name} value={device.device_id} />
+                                <Picker.Item key={index} label={`Device ${device.device_id} (${device.name})`} value={device.device_id} />
                             )
                         })}
                     </Picker>
@@ -96,7 +77,7 @@ function Dashboard({navigation}: any) {
                         )}
                         <View style={styles.submitButtonContainer}>
                             <TouchableOpacity style={styles.submitButton} onPress={() => {
-                                getRecords(token, selectedDevice, dateFrom.toLocaleDateString(), dateTo.toLocaleDateString())
+                                getRecords(token, selectedDevice, dateFrom, dateTo)
                                     .then((data:WeatherRecord[]) => {
                                         console.log(data);
                                         setRecords(data);

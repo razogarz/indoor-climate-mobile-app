@@ -201,17 +201,23 @@ export async function logDevice(
 export async function getRecords(
     token: string,
     deviceId: string | undefined,
-    from: string,
-    to: string
+    from: Date,
+    to: Date
 ) {
     if(token === "" || deviceId === undefined) return [];
-    // const urlRep = `${endpoints.records}?device_id=${deviceId}&start_date=${from}&end_date=${to}`;
-    const urlRep = `${endpoints.records}?device_id=${deviceId}`;
-    console.log(
-        token,
-        deviceId,
-        urlRep
-    )
+    let fromShifted = new Date(JSON.parse(JSON.stringify(from)))
+    let toShifted = new Date(JSON.parse(JSON.stringify(to)))
+
+    fromShifted = shiftDateByHours(fromShifted, -16);
+    toShifted = shiftDateByHours(toShifted, 8);
+
+    const fromISO = fromShifted.toISOString()
+    const toISO = toShifted.toISOString()
+    console.log({
+        from: new Date(fromShifted),
+        to: new Date(toShifted)
+    });
+    const urlRep = `${endpoints.records}?device_id=${deviceId}&start_date=${fromISO}&end_date=${toISO}`;
     return fetch(urlRep, {
         method: 'GET',
         headers: {
@@ -230,4 +236,8 @@ export async function getRecords(
         .catch((error) => {
             Alert.alert("Błąd serwera! Spróbuj ponownie później.");
         });
+}
+
+function shiftDateByHours(date: Date, hours: number){
+    return new Date(date.setTime(date.getTime() + hours*60*60*1000));
 }

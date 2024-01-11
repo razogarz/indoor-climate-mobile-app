@@ -87,7 +87,7 @@ export default function AddDevices(
                                 }}
                                 key={device.id}
                             >
-                                <Text>{device.name || "Unknown device " + index}</Text>
+                                <Text>{device.name || `Unknown device ${index} (${device.id})`}</Text>
                             </TouchableOpacity>
                         ))}
                     </ScrollView>

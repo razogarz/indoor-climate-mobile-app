@@ -6,24 +6,12 @@ import {deleteDevice, getDevices} from "../../hooks/Endpoints";
 import {DeviceProperties} from "../../types/types";
 
 export default function MyDevices({navigation}: any) {
-    const {token} = useUserCredentials();
-    const [devicesArray, setDevicesArray] = useState({} as DeviceProperties[]);
-
-    useEffect(() => {
-        getDevices(token)
-            .then((devices) => {
-                console.log(devices);
-                setDevicesArray(devices);
-            })
-            .catch((error) => {
-                console.log(error);
-            })
-    }, [token]);
+    const {token, devices, setAddDeviceSignal} = useUserCredentials();
 
     return (
         <>
             <ScrollView contentContainerStyle={styles.cardsContainer}>
-                {devicesArray.length > 0 && devicesArray.map((device, index) => {
+                {devices.length > 0 && devices.map((device, index) => {
                     return (
                         <View style={styles.deviceCard} key={index}>
                             <View>
@@ -31,7 +19,8 @@ export default function MyDevices({navigation}: any) {
                                 <Text>Device name: {device.name}</Text>
                             </View>
                             <TouchableOpacity style={styles.deleteButton} onPress={() => {
-                                deleteDeviceFromList(token, device.device_id, setDevicesArray);
+                                deleteDeviceFromList(token, device.device_id);
+                                setAddDeviceSignal(prev => !prev);
                             }}>
                                 <Text style={styles.buttonText}>X</Text>
                             </TouchableOpacity>
@@ -47,8 +36,7 @@ export default function MyDevices({navigation}: any) {
 
 function deleteDeviceFromList(
     token:string,
-    id:string,
-    setDevicesArray: Dispatch<SetStateAction<DeviceProperties[]>>
+    id:string
 ) {
     Alert.alert(
         "Usuwanie urządzenia",
@@ -68,11 +56,6 @@ function deleteDeviceFromList(
                     deleteDevice(token, id)
                         .then((response) => {
                             console.log(JSON.stringify(response));
-                            setDevicesArray((prevState) => {
-                                return prevState.filter((device) => {
-                                    return device.device_id !== id;
-                                })
-                            })
                         })
                         .catch((error) => {
                             console.log(error);
