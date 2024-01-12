@@ -207,15 +207,11 @@ export async function getRecords(
     if(token === "" || !deviceId) return [];
     let fromShifted = new Date(JSON.parse(JSON.stringify(from)))
     let toShifted = new Date(JSON.parse(JSON.stringify(to)))
-
-    // fromShifted = shiftDateByHours(fromShifted, -16);
-    // toShifted = shiftDateByHours(toShifted, 8);
-
-    const fromISO = fromShifted.toISOString()
-    const toISO = toShifted.toISOString()
+    const fromISO = `${from.toISOString().slice(0, 10)}T00:00:00.000Z`
+    const toISO = `${to.toISOString().slice(0, 10)}T23:59:59.999Z`
     console.log({
-        from: fromShifted,
-        to: toShifted
+        from: fromISO,
+        to: toISO
     });
     const urlRep = `${endpoints.records}?device_id=${deviceId}&start_date=${fromISO}&end_date=${toISO}`;
     return fetch(urlRep, {
